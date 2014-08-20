@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Здания{% endblock %}
+{% block content %}
+
+{% csrf_token %}
+<table align="center" border="1">
+	<tr>
+	<td>Здание</td>
+	<td>Обслуживающая организация</td>
+	</tr>
+{% for building in buildings %}	
+	<tr>
+	<td>{{ building }}</td>
+	<td>{{ building.service_organization }}</td>
+	<td><a href="/buildings/{{ building.id }}/delete/">Удалить</a></td>
+	</tr>
+{% endfor %}
+</table>
+
+{% endblock %}

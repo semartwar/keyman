@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Пользователи{% endblock %}
+{% block content %}
+
+{% csrf_token %}
+<table align="center" border="1">
+	<tr>
+	<td>Логин</td>
+	<td>Email</td>
+	<td>Имя</td>
+	<td>Фамилия</td>
+	</tr>
+{% for user in users %}	
+	<tr>
+	<td>{{ user.username }}</td>
+	<td>{{ user.email }}</td>
+	<td>{{ user.first_name }}</td>
+	<td>{{ user.last_name }}</td>
+	<td><a href="/users/{{ user.id }}/delete/">Удалить</a></td>
+	</tr>
+{% endfor %}
+</table>
+
+{% endblock %}

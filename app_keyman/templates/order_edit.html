@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Редактирование заявки{% endblock %}
+{% block content %}
+
+<form name="order_edit" method="post" action="{% url 'orders:edit' order_id %}">
+	{% csrf_token %}
+	<table align="left">
+	<tr><td>Организация</td><td>{{ order_form.organization }}</td></tr>
+	<tr><td>Подъезд</td><td>{{ order_form.porch }}</td></tr>
+	<tr><td>Помещение</td><td>{{ order_form.building_object_type }}</td></tr>
+	<tr><td>Дата проведения работ</td><td>{{ order_form.work_date }}</td></tr>
+	<tr><td>Причина</td><td>{{ order_form.order_reason }}</td></tr>
+    {% if is_controller or is_manager %}
+    <tr><td>Комментарий</td><td>{{ order_form.comment }}</td></tr>
+    {% endif %}
+	<tr><td>Здание</td><td>{{ order_form.building }}</td></tr>
+	
+	{% if is_controller %}
+		<tr><td>Приоритет</td><td>{{ order_form.priority }}</td></tr>
+    {% endif %}
+    {% if is_controller or is_manager %}
+        <tr><td>Статус</td><td>{{ order_form.order_status }}</td></tr>
+    {% endif %}
+	
+	</table>
+	<input type="submit" value="Сохранить">
+</form>
+
+{% endblock %}

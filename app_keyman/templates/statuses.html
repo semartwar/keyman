@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Статусы заявок{% endblock %}
+{% block content %}
+
+	<table border="1" align="center">
+	
+	<tr>
+		<td>Статус</td>
+		<td>Возможна отмена пользователем</td>
+		<td>Может использоваться 
+		управляющей компанией</td>
+		<td>Может использоваться 
+		контролирующим органом</td>
+		<td>По умолчанию</td>
+	</tr>
+	
+	{% for status in statuses %}
+	<tr>
+		<td>{{ status.name }}</td>
+		<td>{{ status.user_can_cancel }}</td>
+		<td>{{ status.manager_can_use }}</td>
+		<td>{{ status.controller_can_use }}</td>
+		<td>{{ status.is_default }}</td>
+		{% if is_superuser %}
+		<td><a href="{% url 'statuses:edit' status_id=status.id %}">Редактировать</a></td>
+		<td><a href="{% url 'statuses:del' status_id=status.id %}">Удалить</a></td>
+		{% endif %}
+	</tr>
+	{% endfor %}
+	</table>
+
+{% endblock %}

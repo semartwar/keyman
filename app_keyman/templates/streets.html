@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Здания{% endblock %}
+{% block content %}
+
+<table align="center" border="1">
+	<tr>
+	<td>Улица</td>
+	</tr>
+{% for street in streets %}	
+	<tr>
+	<td>{{ street.name }}</td>
+	<td><a href="/streets/{{ street.id }}/delete/">Удалить</a></td>
+	</tr>
+{% endfor %}
+</table>
+
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Заявки{% endblock %}
+{% block content %}
+
+	<table border="1" align="center">
+
+	<tr>
+        <td>Номер заявки</td>
+		<td>Дата работ</td>
+		<td>Здание</td>
+		<td>Подъезд</td>
+		<td>Место доступа</td>
+		<td>Причина</td>
+        {% if is_controller or is_manager %}
+        <td>Комментарий</td>
+        {% endif %}
+		<td>Статус</td>
+		{% if is_controller %}
+		<td>Организация</td>
+		<td>Пользователь</td>		
+		<td>Ответственный</td>
+		{% endif %}
+		{% if is_controller or is_manager %}
+		<td>Телефон</td>
+		<td>Приоритет</td>
+		{% endif %}
+	</tr>
+	
+	{% for order in order_list %}
+	<tr>
+        <td>{{ order.id }}</td>
+		<td>{{ order.work_date }}</td>
+		<td>{{ order.building }}</td>
+		<td>{{ order.porch }}</td>
+		<td>{{ order.building_object_type }}</td>
+		<td>{{ order.order_reason }}</td>
+        {% if is_controller or is_manager %}
+        <td>{{ order.comment }}</td>
+        {% endif %}
+        {% if order.is_active %}
+        <td>{{ order.order_status }}</td>
+        {% else %}
+        <td>Отменена</td>
+        {% endif %}
+		{% if is_controller %}
+		<td> {{ order.org_creator }}</td>
+		<td> {{ order.user_creator }}</td>
+		<td> {{ order.org_responsible }}</td>
+		{% endif %}
+		{% if is_controller or is_manager %}
+		<td>{{ order.telephone }}</td>
+		<td>{{ order.priority }}</td>
+		{% endif %}
+		{% if is_controller or is_manager %}
+		<td><a href="/orders/{{ order.id }}/edit">Редактировать</a></td>
+		{% endif %}
+		<td><a href="/orders/{{ order.id }}/cancel">
+            {% if order.is_active %}
+            Сделать неактивной
+            {% else %}
+            Сделать активной
+            {% endif %}
+        </a></td>
+	</tr>
+	{% endfor %}
+	</table>
+
+{% endblock %}

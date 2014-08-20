@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Создание заявки{% endblock %}
+{% block content %}
+
+<form name="create_order" method="post" action="{% url 'orders:add' %}">
+	{% csrf_token %}
+	<table align="left">
+	<tr><td>Организация</td><td>{{ order_form.organization }}</td></tr>
+	<tr><td>Подъезд</td><td>{{ order_form.porch }}</td></tr>
+	<tr><td>Помещение</td><td>{{ order_form.building_object_type }}</td></tr>
+	<tr><td>Дата проведения работ</td><td>{{ order_form.work_date }}</td></tr>
+	<tr><td>Причина</td><td>{{ order_form.order_reason }}</td></tr>
+	<tr><td>Здание</td><td>{{ order_form.building }}</td></tr>
+	
+	{% if is_controller %}
+		<tr><td>Приоритет</td><td>{{ order_form.priority }}</td></tr>
+		<tr><td>Статус</td><td>{{ order_form.order_status }}</td></tr>
+	{% endif %}
+	
+	</table>
+	<input type="submit" value="Сохранить">
+</form>
+
+{% endblock %}

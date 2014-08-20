@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% if form_auth.errors %}
+<p>Your username and password didn't match. Please try again.</p>
+{% endif %}
+
+<form method="post" action="{% url 'login' %}">
+{% csrf_token %}
+<table align="center">
+<tr>
+    <td>Логин:</td>
+    <td>{{ form_auth.username }}</td>
+</tr>
+<tr>
+    <td>Пароль:</td>
+    <td>{{ form_auth.password }}</td>
+</tr>
+<tr>
+<td></td>
+<td align="right"><input type="submit" value="Войти"/></td>
+</tr>
+</table>
+
+</form>
+
+{% endblock %}

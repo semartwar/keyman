@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Приоритеты заявок{% endblock %}
+{% block content %}
+
+	<table border="1" align="center">
+	
+	<tr>
+		<td>Приоритет</td>
+		<td>По умолчанию</td>
+	</tr>
+	
+	{% for priority in priorities %}
+	<tr>
+		<td>{{ priority.name }}</td>
+		<td>{{ priority.is_default }}</td>
+		{% if is_superuser %}
+		<td><a href="/priorities/{{ priority.id }}/edit/">Редактировать</a></td>
+		<td><a href="/priorities/{{ priority.id }}/delete/">Удалить</a></td>
+		{% endif %}
+	</tr>
+	{% endfor %}
+	</table>
+
+{% endblock %}
