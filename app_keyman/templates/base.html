@@ -2,49 +2,59 @@
 <html>
 <head>
 	<title>
-		{% block title %}
-		{% endblock %}
+		{% block title %}{% endblock %}
 	</title>
-    {% load staticfiles %}
-    <link rel="stylesheet" href="">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/bootstrap.css' %}">
+    <link rel="stylesheet" href="{% static 'css/skylab.css' %}">
 </head>
-<body>
+<body role="document">
+    {% block main %}
     {% if is_authenticated %}
-    <table align="left">
-        <tr>
-        <td>Меню</td>
-        </tr>
-        <tr><td>Справочники</td></tr>
-        <tr><td><a href="{% url 'orders:view' %}">Заявки</a></td></tr>
-        {% if is_superuser %}
-        <tr><td><a href="{% url 'statuses:view' %}">Статусы заявок</a></td></tr>
-        <tr><td><a href="{% url 'priorities:view' %}">Приоритеты заявок</a></td></tr>
-        <tr><td><a href="{% url 'organizations:view' %}">Организации</a></td></tr>
-        <tr><td><a href="{% url 'streets:view' %}">Улицы</a></td></tr>
-        <tr><td><a href="{% url 'buildings:view' %}">Здания</a></td></tr>
-        <tr><td><a href="{% url 'users:view' %}">Пользователи</a></td></tr>
-        {% endif %}
+    <div class="navbar navbar-default">
+        <div class="container">
+            <div class="navbar-header">
+                <a class="navbar-brand">Учет ключей</a>
+            </div>
+            <div class="navbar-collapse collapse">
 
-        <tr><td>Действия</td></tr>
-        <tr><td><a href="{% url 'orders:add' %}">Создать заявку</a></td></tr>
-        {% if is_superuser %}
-        <tr><td><a href="{% url 'statuses:add' %}">Добавить статус заявки</a></td></tr>
-        <tr><td><a href="{% url 'organizations:add' %}">Добавить организацию</a></td></tr>
-        <tr><td><a href="{% url 'streets:add' %}">Добавить улицу</a></td></tr>
-        <tr><td><a href="{% url 'buildings:add' %}">Добавить здание</a></td></tr>
-        <tr><td><a href="{% url 'priorities:add' %}">Добавить приоритет</a></td></tr>
-        <tr><td><a href="{% url 'users:add' %}">Добавить пользователя</a></td></tr>
-        {% endif %}
+            </div>
+        </div>
+    </div>
+    {% block actions %}
+    <div class="container-fluid">
+        <div class="row">
+        <div class="col-md-2">
+            {% if is_superuser %}
+            <a class="list-group-item" href="{% url 'statuses:view' %}">Статусы заявок</a>
+            <a class="list-group-item" href="{% url 'priorities:view' %}">Приоритеты заявок</a>
+            <a class="list-group-item" href="{% url 'organizations:view' %}">Организации</a>
+            <a class="list-group-item" href="{% url 'streets:view' %}">Улицы</a>
+            <a class="list-group-item" href="{% url 'buildings:view' %}">Здания</a>
+            <a class="list-group-item" href="{% url 'users:view' %}">Пользователи</a>
+            {% endif %}
+            <a class="list-group-item" href="{% url 'orders:view' %}">Заявки</a>
+            <a class="list-group-item" href="{% url 'orders:add' %}">Создать заявку</a>
 
-        <tr><td><a href="{% url 'logout' %}">Выйти</a></td></tr>
-    </table>
+            {% if is_superuser %}
+            <a class="list-group-item" href="{% url 'statuses:add' %}">Добавить статус заявки</a>
+            <a class="list-group-item" href="{% url 'organizations:add' %}">Добавить организацию</a>
+            <a class="list-group-item" href="{% url 'streets:add' %}">Добавить улицу</a>
+            <a class="list-group-item" href="{% url 'buildings:add' %}">Добавить здание</a>
+            <a class="list-group-item" href="{% url 'priorities:add' %}">Добавить приоритет</a>
+            <a class="list-group-item" href="{% url 'users:add' %}">Добавить пользователя</a>
+            {% endif %}
+
+            <a class="list-group-item" href="{% url 'logout' %}">Выйти</a>
+        </div>
+        <div class="col-md-5">
+            {% block content %}
+            {% endblock %}
+        </div>
+        </div>
+    </div>
+	{% endblock %}
     {% endif %}
-
-	{% block actions %}
-	{% endblock %}
-    {% block content %}
     {% endblock %}
-	{% block user %}
-	{% endblock %}
 </body>
 </html>

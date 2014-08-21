@@ -2,7 +2,7 @@
 {% block title %}Статусы заявок{% endblock %}
 {% block content %}
 
-	<table border="1" align="center">
+	<table class="table table-bordered" align="center">
 	
 	<tr>
 		<td>Статус</td>
@@ -17,10 +17,34 @@
 	{% for status in statuses %}
 	<tr>
 		<td>{{ status.name }}</td>
-		<td>{{ status.user_can_cancel }}</td>
-		<td>{{ status.manager_can_use }}</td>
-		<td>{{ status.controller_can_use }}</td>
-		<td>{{ status.is_default }}</td>
+		<td>
+            {% if status.user_can_cancel %}
+                <span class="glyphicon glyphicon glyphicon-ok-circle"></span>
+            {% else %}
+                <span class="glyphicon glyphicon-remove-circle"></span>
+            {% endif %}
+        </td>
+		<td>
+            {% if status.manager_can_use %}
+                <span class="glyphicon glyphicon glyphicon-ok-circle"></span>
+            {% else %}
+                <span class="glyphicon glyphicon-remove-circle"></span>
+            {% endif %}
+        </td>
+		<td>
+            {% if status.controller_can_use %}
+                <span class="glyphicon glyphicon glyphicon-ok-circle"></span>
+            {% else %}
+                <span class="glyphicon glyphicon-remove-circle"></span>
+            {% endif %}
+        </td>
+		<td>
+            {% if status.is_default %}
+                <span class="glyphicon glyphicon glyphicon-ok-circle"></span>
+            {% else %}
+                <span class="glyphicon glyphicon-remove-circle"></span>
+            {% endif %}
+        </td>
 		{% if is_superuser %}
 		<td><a href="{% url 'statuses:edit' status_id=status.id %}">Редактировать</a></td>
 		<td><a href="{% url 'statuses:del' status_id=status.id %}">Удалить</a></td>

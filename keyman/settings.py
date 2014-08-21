@@ -85,5 +85,9 @@ USE_TZ = False
 
 STATIC_URL = '/static/'
 
+STATICFILES_DIRS = (
+    ('app_keyman', 'C:/Users/gasnikovda/PycharmProjects/keyman/app_keyman/static/')
+)
+
 # Templates
 TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
