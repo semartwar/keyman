@@ -24,6 +24,25 @@ def get_user_organizations(user):
     return Organization.objects.filter(id__in=organizations_id)
 
 
+def get_user_info(user):
+
+    # информация о организации
+
+    user_info = {}
+
+    try:
+
+        organization_user = OrganizationUser.objects.get(user_id=user.id)
+
+        user_info['organization_name'] = organization_user.organization.name
+
+    except OrganizationUser.DoesNotExist:
+
+        user_info['organization_name'] = 'Организация не указана'
+
+    return user_info
+
+
 def is_user_controller(user):
     try:
         is_controller = UserInfo.objects.get(user=user).is_controller
@@ -101,6 +120,7 @@ def orders(request):
         'is_superuser': request.user.is_superuser,
         'is_controller': is_controller,
         'is_manager': is_manager,
+        'user_info': get_user_info(request.user),
     }
 
     return render(request, 'orders.html', context)

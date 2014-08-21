@@ -11,16 +11,18 @@
 <body role="document">
     {% block main %}
     {% if is_authenticated %}
-    <div class="navbar navbar-default">
-        <div class="container">
+    <nav class="navbar navbar-default" role="navigation">
+        <div class="container-fluid">
             <div class="navbar-header">
-                <a class="navbar-brand">Учет ключей</a>
+                <a class="navbar-brand" href="/">{{ user_info.organization_name }}</a>
             </div>
-            <div class="navbar-collapse collapse">
-
-            </div>
-        </div>
-    </div>
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="/logout/">Выйти</a></li>
+                </ul>
+            </div><!-- /.navbar-collapse -->
+        </div><!-- /.container-fluid -->
+    </nav>
     {% block actions %}
     <div class="container-fluid">
         <div class="row">

@@ -16,6 +16,6 @@ urlpatterns = patterns('',
     url(r'^statuses/', include('app_keyman.urls_order_status', namespace='statuses')),
     url(r'^orders/', include('app_keyman.urls', namespace='orders')),
     url(r'^users/', include('app_keyman.urls_users', namespace='users')),
-    url(r'^logout$', 'app_keyman.views.logout', name='logout'),
+    url(r'^logout/$', 'app_keyman.views.logout', name='logout'),
     url(r'^$', 'app_keyman.views.login', name='login'),
 )

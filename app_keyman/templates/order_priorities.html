@@ -12,7 +12,13 @@
 	{% for priority in priorities %}
 	<tr>
 		<td>{{ priority.name }}</td>
-		<td>{{ priority.is_default }}</td>
+		<td>
+            {% if priority.is_default %}
+                <span class="glyphicon glyphicon glyphicon-ok-circle"></span>
+            {% else %}
+                <span class="glyphicon glyphicon-remove-circle"></span>
+            {% endif %}
+        </td>
 		{% if is_superuser %}
 		<td><a href="/priorities/{{ priority.id }}/edit/">Редактировать</a></td>
 		<td><a href="/priorities/{{ priority.id }}/delete/">Удалить</a></td>
