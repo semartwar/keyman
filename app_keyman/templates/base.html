@@ -18,36 +18,38 @@
             </div>
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav navbar-right">
-                    <li><a href="/logout/">Выйти</a></li>
+                    <li><a href="{% url 'logout' %}">Выйти</a></li>
                 </ul>
             </div><!-- /.navbar-collapse -->
         </div><!-- /.container-fluid -->
     </nav>
+
     {% block actions %}
     <div class="container-fluid">
         <div class="row">
         <div class="col-md-2">
-            {% if is_superuser %}
-            <a class="list-group-item" href="{% url 'statuses:view' %}">Статусы заявок</a>
-            <a class="list-group-item" href="{% url 'priorities:view' %}">Приоритеты заявок</a>
-            <a class="list-group-item" href="{% url 'organizations:view' %}">Организации</a>
-            <a class="list-group-item" href="{% url 'streets:view' %}">Улицы</a>
-            <a class="list-group-item" href="{% url 'buildings:view' %}">Здания</a>
-            <a class="list-group-item" href="{% url 'users:view' %}">Пользователи</a>
-            {% endif %}
-            <a class="list-group-item" href="{% url 'orders:view' %}">Заявки</a>
-            <a class="list-group-item" href="{% url 'orders:add' %}">Создать заявку</a>
+            <div class="list-group">
+                <a href="#" class="list-group-item list-group-item-info">Меню</a>
+                {% if is_superuser %}
+                <a class="list-group-item" href="{% url 'statuses:view' %}">Статусы заявок</a>
+                <a class="list-group-item" href="{% url 'priorities:view' %}">Приоритеты заявок</a>
+                <a class="list-group-item" href="{% url 'organizations:view' %}">Организации</a>
+                <a class="list-group-item" href="{% url 'streets:view' %}">Улицы</a>
+                <a class="list-group-item" href="{% url 'buildings:view' %}">Здания</a>
+                <a class="list-group-item" href="{% url 'users:view' %}">Пользователи</a>
+                {% endif %}
+                <a class="list-group-item" href="{% url 'orders:view' %}">Заявки</a>
+                <a class="list-group-item" href="{% url 'orders:add' %}">Создать заявку</a>
 
-            {% if is_superuser %}
-            <a class="list-group-item" href="{% url 'statuses:add' %}">Добавить статус заявки</a>
-            <a class="list-group-item" href="{% url 'organizations:add' %}">Добавить организацию</a>
-            <a class="list-group-item" href="{% url 'streets:add' %}">Добавить улицу</a>
-            <a class="list-group-item" href="{% url 'buildings:add' %}">Добавить здание</a>
-            <a class="list-group-item" href="{% url 'priorities:add' %}">Добавить приоритет</a>
-            <a class="list-group-item" href="{% url 'users:add' %}">Добавить пользователя</a>
-            {% endif %}
-
-            <a class="list-group-item" href="{% url 'logout' %}">Выйти</a>
+                {% if is_superuser %}
+                <a class="list-group-item" href="{% url 'statuses:add' %}">Добавить статус заявки</a>
+                <a class="list-group-item" href="{% url 'organizations:add' %}">Добавить организацию</a>
+                <a class="list-group-item" href="{% url 'streets:add' %}">Добавить улицу</a>
+                <a class="list-group-item" href="{% url 'buildings:add' %}">Добавить здание</a>
+                <a class="list-group-item" href="{% url 'priorities:add' %}">Добавить приоритет</a>
+                <a class="list-group-item" href="{% url 'users:add' %}">Добавить пользователя</a>
+                {% endif %}
+            </div>
         </div>
         <div class="col-md-5">
             {% block content %}
