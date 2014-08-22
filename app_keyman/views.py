@@ -7,76 +7,25 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.shortcuts import HttpResponseRedirect
 from django.contrib.auth.forms import AuthenticationForm
-from models import Order, OrganizationUser, Organization, OrderPriority, OrderStatus, OrderForm, UserForm, UserInfo, \
-    Building, BuildingForm, Street, StreetForm, OrganizationForm, StatusForm, OrderPriorityForm
+from django.core.urlresolvers import reverse
+from models import Order, Organization, OrderPriority, OrderStatus, OrderForm, UserForm, \
+    UserProfile, Building, BuildingForm, Street, StreetForm, OrganizationForm, StatusForm, OrderPriorityForm
 
 # Create your views here.
 
 
-def get_user_organizations(user):
-
-    if is_user_controller(user):
-        organizations_id = Organization.objects.all()
-    else:
-        organizations_id = OrganizationUser.objects.filter(user_id=user.id).values_list('organization_id',
-                                                                                        flat=True)
-
-    return Organization.objects.filter(id__in=organizations_id)
-
-
-def get_user_info(user):
-
-    # информация о организации
-
-    user_info = {}
-
-    try:
-
-        organization_user = OrganizationUser.objects.get(user_id=user.id)
-
-        user_info['organization_name'] = organization_user.organization.name
-
-    except OrganizationUser.DoesNotExist:
-
-        user_info['organization_name'] = 'Организация не указана'
-
-    return user_info
-
-
-def is_user_controller(user):
-    try:
-        is_controller = UserInfo.objects.get(user=user).is_controller
-    except UserInfo.DoesNotExist:
-        is_controller = False
-
-    if not is_controller:
-
-        is_controller = user.is_superuser
-
-    return is_controller
-
-
-def is_user_manager(user):
-    try:
-        is_manager = UserInfo.objects.get(user=user).is_manager
-    except UserInfo.DoesNotExist:
-        is_manager = False
-
-    if not is_manager:
-
-        is_manager = user.is_superuser
-
-    return is_manager
-
-
 def login(request):
 
-    if request.user.is_authenticated():
+    request_user = request.user
+
+    if request_user.is_authenticated():
+
         return HttpResponseRedirect('/orders/view')
 
     form_auth = AuthenticationForm(None, request.POST or None)
 
     if form_auth.is_valid():
+
         auth.login(request, form_auth.get_user())
         return HttpResponseRedirect('/orders/view')
 
@@ -96,31 +45,34 @@ def logout(request):
 
 def orders(request):
 
-    if not request.user.is_authenticated():
+    request_user = request.user
+    user_profile = request_user.userprofile
+
+    # только аутентифицированные юзвери
+    if not request_user.is_authenticated():
         return HttpResponseRedirect('/')
 
-    is_controller = is_user_controller(request.user)
-    is_manager = is_user_manager(request.user)
-
-    if is_controller:
+    # для контролирующих органов/админов доступны все
+    # заявки
+    if user_profile.is_controller or user_profile.is_superuser:
 
         order_list = Order.objects.all()
 
+    elif user_profile.is_manager:
+
+        # для манагеров (уп. компаний) только те, которые обслуживает
+        # их организация
+        order_list = Order.objects.filter(org_responsible=request_user.organization)
+
     else:
-        organizations_id = OrganizationUser.objects.filter(user_id=request.user.id).values_list("organization_id",
-                                                                                                flat=True)
-        if is_manager:
-            order_list = Order.objects.filter(org_responsible__in=set(organizations_id))
-        else:
-            order_list = Order.objects.filter(org_creator__in=set(organizations_id))
+
+        # для простых смертных только их заявки
+        order_list = Order.objects.filter(org_creator=request_user.organization)
 
     context = {
         'order_list': order_list,
-        'is_authenticated': request.user.is_authenticated(),
-        'is_superuser': request.user.is_superuser,
-        'is_controller': is_controller,
-        'is_manager': is_manager,
-        'user_info': get_user_info(request.user),
+        'request_user': request_user,
+        'user_profile': user_profile,
     }
 
     return render(request, 'orders.html', context)
@@ -128,16 +80,18 @@ def orders(request):
 
 def order_add(request):
 
-    if not request.user.is_authenticated():
+    request_user = request.user
+    user_profile = request_user.userprofile
+
+    # только аутентифицированные юзвери
+    if not (request_user.is_authenticated() and (request_user.is_superuser or user_profile.is_controller)) :
         return HttpResponseRedirect('/')
 
-    is_controller = is_user_controller(request.user)
-    is_manager = is_user_manager(request.user)
-
+    # этот день 09:00:00
     min_date = datetime.datetime.today().replace(hour=9, minute=0, second=0, microsecond=0)
 
     # поданные в пятницу переносим на понедельник
-    # остальные на следующий день
+    # остальные на следующий день ибо нехуй
     if min_date.weekday() == 4:
         min_date += datetime.timedelta(days=3)
     else:
@@ -149,23 +103,27 @@ def order_add(request):
 
         if order_form.is_valid():
 
-            # проверка даты заявки
+            # проверка даты заявки. минимальная дата 9 утра следующего дня,
+            # максимальная 14 часов
 
+            # на всякий случай обнуляем секунды
             work_date = order_form.cleaned_data['work_date'].replace(second=0)
 
             if min_date > work_date:
 
-                return HttpResponse('Дата меньше')
+                return HttpResponse('надо выводить в форме заявки ошибку')
 
             elif min_date < work_date and ((work_date.hour > 14 and work_date.minute >= 0)
                                            or (work_date.hour == 14 and work_date.minute > 0)):
 
-                return HttpResponse('Дата больше')
+                return HttpResponse('надо выводить в форме заявки ошибку')
+
+            # все хорошо, создаем заявку
 
             order = Order()
 
             order.org_creator = order_form.cleaned_data['organization']
-            order.user_creator = request.user
+            order.user_creator = request_user
             order.org_responsible = order_form.cleaned_data['building'].service_organization
             order.building = order_form.cleaned_data['building']
             order.porch = order_form.cleaned_data['porch']
@@ -177,26 +135,32 @@ def order_add(request):
 
             order.save()
 
+            # возвращаемся к списку заявок
+
             return HttpResponseRedirect('/orders/view/')
         else:
-            return HttpResponse(order_form.errors)
-
-    user_organizations = get_user_organizations(request.user)
+            return HttpResponse('надо выводить в форме заявки ошибку')
 
     initial_data = {
-        'organization': Organization.objects.get(id=user_organizations[0].id),
+        'organization': user_profile.organization,
         'work_date': min_date,
     }
 
+    # для админов и контролирующих органов доступны все
+    # организации
+    if request_user.is_superuser or user_profile.is_controller:
+        organization_qs = Organization.objects.all()
+    else:
+        organization_qs = Organization.objects.filter(id=request_user.organization.id)
+
     order_form = OrderForm(initial=initial_data)
-    order_form.set_queryset(element='organization', queryset=user_organizations)
+    order_form.set_queryset(element='organization', queryset=organization_qs)
 
     context = {
+        'action': 'add',
         'order_form': order_form,
-        'is_authenticated': request.user.is_authenticated(),
-        'is_superuser': request.user.is_superuser,
-        'is_controller': is_controller,
-        'is_manager': is_manager,
+        'request_user': request_user,
+        'user_profile': user_profile,
     }
 
     return render(request, 'order.html', context)
@@ -204,17 +168,20 @@ def order_add(request):
 
 def order_edit(request, order_id):
 
-    if not request.user.is_authenticated():
+    request_user = request.user
+    user_profile = request_user.userprofile
+
+    if not request_user.is_authenticated():
         return HttpResponseRedirect('/')
 
-    is_superuser = request.user.is_superuser
-    is_controller = is_user_controller(request.user)
-    is_manager = is_user_manager(request.user)
-
-    if not (request.user.is_superuser or is_controller or is_manager):
+    # редактирование доступно для всех кроме смертных
+    if not (request_user.is_superuser or user_profile.is_controller or user_profile.is_manager):
         return HttpResponseRedirect('/orders/view/')
 
-    order = Order.objects.get(id=order_id)
+    try:
+        order = Order.objects.get(id=order_id)
+    except Order.DoesNotExist:
+        return HttpResponseRedirect('http://www.google.com/')
 
     if request.method == 'POST':
 
@@ -224,10 +191,14 @@ def order_edit(request, order_id):
 
             order_status = order_form.cleaned_data['order_status']
 
-            if (is_controller or is_manager) and order_status:
+            # манагеры и контролирующие органы могут менять
+            # статус заявок
+            if (user_profile.is_controller or user_profile.is_manager) and order_status:
                 order.order_status = order_form.cleaned_data['order_status']
 
-            if is_controller:
+            # контролирующие органы могут дополнительно менять
+            # приоритет заявки и комментарий к ней
+            if user_profile.is_controller:
                 order.priority = order_form.cleaned_data['priority']
                 order.comment = order_form.cleaned_data['comment']
 
@@ -243,13 +214,18 @@ def order_edit(request, order_id):
 
     order_form = OrderForm(instance=order, initial=initial_data)
 
-    order_form.set_queryset(element='organization', queryset=get_user_organizations(order.user_creator))
+    if request_user.is_superuser or user_profile.is_controller:
+        organization_qs = Organization.objects.all()
+    else:
+        organization_qs = Organization.objects.filter(id=order.org_creator.id)
 
-    if is_superuser:
+    order_form.set_queryset(element='organization', queryset=organization_qs)
+
+    if user_profile.is_superuser:
         statuses_qs = OrderStatus.objects.all()
-    elif is_controller:
+    elif user_profile.is_controller:
         statuses_qs = OrderStatus.objects.filter(controller_can_use=True)
-    elif is_manager:
+    elif user_profile.is_manager:
         statuses_qs = OrderStatus.objects.filter(manager_can_use=True)
     else:
         statuses_qs = OrderStatus.objects.none()
@@ -259,12 +235,11 @@ def order_edit(request, order_id):
     order_form.organization = order.org_creator
 
     context = {
+        'action': 'edit',
         'order_id': order_id,
         'order_form': order_form,
-        'is_authenticated': request.user.is_authenticated(),
-        'is_superuser': is_superuser,
-        'is_controller': is_controller,
-        'is_manager': is_manager,
+        'request_user': request_user,
+        'user_profile': user_profile,
     }
 
     return render(request, 'order_edit.html', context)
@@ -272,7 +247,16 @@ def order_edit(request, order_id):
 
 def order_cancel(request, order_id):
 
-    order = Order.objects.get(id=order_id)
+    request_user = request.user
+
+    # только аутентифицированные юзвери
+    if not request_user.is_authenticated():
+        return HttpResponseRedirect('/')
+
+    try:
+        order = Order.objects.get(id=order_id)
+    except Order.DoesNotExist:
+        return HttpResponseRedirect('http://www.google.com')
 
     if not order.order_status.user_can_cancel:
         return HttpResponse('Невозможно отменить заявку с данным статусом')
@@ -285,18 +269,21 @@ def order_cancel(request, order_id):
 
 def users(request):
 
-    if not request.user.is_authenticated():
+    request_user = request.user
+    user_profile = request_user.userprofile
+
+    if not request_user.is_authenticated():
         return HttpResponseRedirect('/')
 
-    if not request.user.is_superuser:
+    if not request_user.is_superuser:
         return HttpResponseRedirect('/orders/view/')
 
     users_list = User.objects.all()
 
     context = {
         'users': users_list,
-        'is_authenticated': request.user.is_authenticated(),
-        'is_superuser': request.user.is_superuser,
+        'request_user': request_user,
+        'user_profile': user_profile,
     }
 
     return render(request, 'users.html', context)
@@ -304,7 +291,10 @@ def users(request):
 
 def user_add(request):
 
-    if not (request.user.is_authenticated() and request.user.is_superuser):
+    request_user = request.user
+    user_profile = request_user.userprofile
+
+    if not (request_user.is_authenticated() and request_user.is_superuser):
         return HttpResponseRedirect('/')
 
     if request.method == 'POST':
@@ -333,28 +323,33 @@ def user_add(request):
                                                     user_form.cleaned_data['email'],
                                                     user_form.cleaned_data['password'])
 
-            user_info = UserInfo(user=new_user, is_controller=user_form.cleaned_data['is_controller'],
-                                 is_manager=user_form.cleaned_data['is_manager'],
-                                 telephone=user_form.cleaned_data['telephone'])
+            new_user.first_name = user_form.cleaned_data['first_name']
+            new_user.last_name = user_form.cleaned_data['last_name']
 
-            user_info.save()
+            new_user.save()
 
-            org_user = OrganizationUser(user=new_user, organization=user_form.cleaned_data['organization'])
+            # запишем данные профиля
+            user_profile = UserProfile(user=new_user,
+                                       organization=user_form.cleaned_data['organization'],
+                                       is_controller=user_form.cleaned_data['is_controller'],
+                                       is_manager=user_form.cleaned_data['is_manager'],
+                                       telephone=user_form.cleaned_data['telephone'])
 
-            org_user.save()
+            user_profile.save()
 
             return HttpResponseRedirect('/users/view/')
 
         else:
 
-            return HttpResponse(user_form.errors)
+            return HttpResponse('Вывести ошибки на форму')
 
     user_form = UserForm()
 
     context = {
+        'action': 'add',
         'user_form': user_form,
-        'is_authenticated': request.user.is_authenticated(),
-        'is_superuser': request.user.is_superuser,
+        'request_user': request_user,
+        'user_profile': user_profile,
     }
 
     return render(request, 'user.html', context)
@@ -365,22 +360,28 @@ def user_del(request, user_id):
     if not (request.user.is_authenticated() and request.user.is_superuser):
         return HttpResponseRedirect('/')
 
-    User.objects.get(id=user_id).delete()
+    try:
+        User.objects.get(id=user_id).delete()
+    except User.DoesNotExist:
+        return HttpResponseRedirect('http://www.google.com')
 
     return HttpResponseRedirect('/users/view/')
 
 
 def buildings(request):
 
-    if not (request.user.is_authenticated() and request.user.is_superuser):
+    request_user = request.user
+    user_profile = request_user.userprofile
+
+    if not (request_user.is_authenticated() and request_user.is_superuser):
         return HttpResponseRedirect('/')
 
     buildings_list = Building.objects.all()
 
     context = {
         'buildings': buildings_list,
-        'is_authenticated': request.user.is_authenticated(),
-        'is_superuser': request.user.is_superuser,
+        'request_user': request_user,
+        'user_profile': user_profile,
     }
 
     return render(request, 'buildings.html', context)
@@ -388,7 +389,9 @@ def buildings(request):
 
 def building_del(request, building_id):
 
-    if not (request.user.is_authenticated() and request.user.is_superuser):
+    request_user = request.user
+
+    if not (request_user.is_authenticated() and request_user.is_superuser):
         return HttpResponseRedirect('/')
 
     Building.objects.get(id=building_id).delete()
@@ -398,7 +401,10 @@ def building_del(request, building_id):
 
 def building_add(request):
 
-    if not (request.user.is_authenticated() and request.user.is_superuser):
+    request_user = request.user
+    user_profile = request_user.userprofile
+
+    if not (request_user.is_authenticated() and request_user.is_superuser):
         return HttpResponseRedirect('/')
 
     if request.method == 'POST':
@@ -420,9 +426,10 @@ def building_add(request):
     building_form = BuildingForm()
 
     context = {
+        'action': 'add',
         'building_form': building_form,
-        'is_authenticated': request.user.is_authenticated(),
-        'is_superuser': request.user.is_superuser,
+        'request_user': request_user,
+        'user_profile': user_profile,
     }
 
     return render(request, 'building.html', context)
@@ -430,12 +437,18 @@ def building_add(request):
 
 def streets(request):
 
+    request_user = request.user
+    user_profile = request_user.userprofile
+
+    if not (request_user.is_authenticated() and request_user.is_superuser):
+        return HttpResponseRedirect('/')
+
     street_list = Street.objects.all()
 
     context = {
         'streets': street_list,
-        'is_authenticated': request.user.is_authenticated(),
-        'is_superuser': request.user.is_superuser,
+        'request_user': request_user,
+        'user_profile': user_profile,
     }
 
     return render(request, 'streets.html', context)
@@ -443,7 +456,10 @@ def streets(request):
 
 def street_add(request):
 
-    if not (request.user.is_authenticated() and request.user.is_superuser):
+    request_user = request.user
+    user_profile = request_user.userprofile
+
+    if not (request_user.is_authenticated() and request_user.is_superuser):
         return HttpResponseRedirect('/')
 
     if request.method == 'POST':
@@ -461,9 +477,10 @@ def street_add(request):
     street_form = StreetForm()
 
     context = {
+        'action': 'add',
         'street_form': street_form,
-        'is_authenticated': request.user.is_authenticated(),
-        'is_superuser': request.user.is_superuser,
+        'request_user': request_user,
+        'user_profile': user_profile,
     }
 
     return render(request, 'street.html', context)
@@ -471,25 +488,33 @@ def street_add(request):
 
 def street_del(request, street_id):
 
-    if not (request.user.is_authenticated() and request.user.is_superuser):
+    request_user = request.user
+
+    if not (request_user.is_authenticated() and request_user.is_superuser):
         return HttpResponseRedirect('/')
 
-    Street.objects.get(id=street_id).delete()
+    try:
+        Street.objects.get(id=street_id).delete()
+    except Street.DoesNotExist:
+        return HttpResponseRedirect('http://www.google.com/')
 
     return HttpResponseRedirect('/streets/view/')
 
 
 def organizations(request):
 
-    if not (request.user.is_authenticated() and request.user.is_superuser):
+    request_user = request.user
+    user_profile = request_user.userprofile
+
+    if not (request_user.is_authenticated() and request_user.is_superuser):
         return HttpResponseRedirect('/')
 
     organizations_list = Organization.objects.all()
 
     context = {
         'organizations': organizations_list,
-        'is_authenticated': request.user.is_authenticated(),
-        'is_superuser': request.user.is_superuser,
+        'request_user': request_user,
+        'user_profile': user_profile,
     }
 
     return render(request, 'organizations.html', context)
@@ -497,7 +522,10 @@ def organizations(request):
 
 def organization_add(request):
 
-    if not (request.user.is_authenticated() and request.user.is_superuser):
+    request_user = request.user
+    user_profile = request_user.userprofile
+
+    if not (request_user.is_authenticated() and request_user.is_superuser):
         return HttpResponseRedirect('/')
 
     if request.method == 'POST':
@@ -513,9 +541,10 @@ def organization_add(request):
     organization_form = OrganizationForm()
 
     context = {
+        'action': 'add',
         'organization_form': organization_form,
-        'is_authenticated': request.user.is_authenticated(),
-        'is_superuser': request.user.is_superuser,
+        'request_user': request_user,
+        'user_profile': user_profile,
     }
 
     return render(request, 'organization.html', context)
@@ -523,26 +552,33 @@ def organization_add(request):
 
 def organization_del(request, organization_id):
 
-    if not (request.user.is_authenticated() and request.user.is_superuser):
+    request_user = request.user
+
+    if not (request_user.is_authenticated() and request_user.is_superuser):
         return HttpResponseRedirect('/')
 
-    Organization.objects.get(id=organization_id).delete()
+    try:
+        Organization.objects.get(id=organization_id).delete()
+    except Organization.DoesNoExist:
+        return HttpResponseRedirect('http://www.google.com/')
 
     return HttpResponseRedirect('/organizations/view/')
 
 
 def statuses(request):
 
-    if not (request.user.is_authenticated() and request.user.is_superuser):
+    request_user = request.user
+    user_profile = request_user.userprofile
+
+    if not (request_user.is_authenticated() and request_user.is_superuser):
         return HttpResponseRedirect('/')
 
     status_list = OrderStatus.objects.all()
 
     context = {
         'statuses': status_list,
-        'is_authenticated': request.user.is_authenticated(),
-        'is_superuser': request.user.is_superuser,
-        'user_info': get_user_info(request.user),
+        'request_user': request_user,
+        'user_profile': user_profile,
     }
 
     return render(request, 'statuses.html', context)
@@ -550,7 +586,10 @@ def statuses(request):
 
 def status_add(request):
 
-    if not (request.user.is_authenticated() and request.user.is_superuser):
+    request_user = request.user
+    user_profile = request_user.userprofile
+
+    if not (request_user.is_authenticated() and request_user.is_superuser):
         return HttpResponseRedirect('/')
 
     if request.method == 'POST':
@@ -572,20 +611,28 @@ def status_add(request):
     status_form = StatusForm()
 
     context = {
+        'action': reverse('statuses:add'),
+        'title': 'Создание статуса',
         'status_form': status_form,
-        'is_authenticated': request.user.is_authenticated(),
-        'is_superuser': request.user.is_superuser,
+        'request_user': request_user,
+        'user_profile': user_profile,
     }
 
-    return render(request, 'status_add.html', context)
+    return render(request, 'status.html', context)
 
 
 def status_edit(request, status_id):
 
-    if not (request.user.is_authenticated() and request.user.is_superuser):
+    request_user = request.user
+    user_profile = request_user.userprofile
+
+    if not (request_user.is_authenticated() and request_user.is_superuser):
         return HttpResponseRedirect('/')
 
-    order_status = OrderStatus.objects.get(id=status_id)
+    try:
+        order_status = OrderStatus.objects.get(id=status_id)
+    except OrderStatus.DoesNotExist:
+        return HttpResponseRedirect('http://www.google.com/')
 
     if request.method == 'POST':
 
@@ -599,6 +646,8 @@ def status_edit(request, status_id):
             order_status.manager_can_use = status_form.cleaned_data['manager_can_use']
             order_status.controller_can_use = status_form.cleaned_data['controller_can_use']
 
+            print(status_form.cleaned_data['user_can_cancel'])
+
             order_status.save()
 
             return HttpResponseRedirect('/statuses/view')
@@ -606,18 +655,21 @@ def status_edit(request, status_id):
     status_form = StatusForm(instance=order_status)
 
     context = {
-        'status_id': status_id,
+        'action': reverse('statuses:edit', kwargs={'status_id': status_id}),
+        'title': 'Редактирование статуса',
         'status_form': status_form,
-        'is_authenticated': request.user.is_authenticated(),
-        'is_superuser': request.user.is_superuser,
+        'request_user': request_user,
+        'user_profile': user_profile,
     }
 
-    return render(request, 'status_edit.html', context)
+    return render(request, 'status.html', context)
 
 
 def status_del(request, status_id):
 
-    if not (request.user.is_authenticated() and request.user.is_superuser):
+    request_user = request.user
+
+    if not (request_user.is_authenticated() and request_user.is_superuser):
         return HttpResponseRedirect('/')
 
     OrderStatus.objects.get(id=status_id).delete()
@@ -627,15 +679,18 @@ def status_del(request, status_id):
 
 def priorities(request):
 
-    if not (request.user.is_authenticated() and request.user.is_superuser):
+    request_user = request.user
+    user_profile = request_user.userprofile
+
+    if not (request_user.is_authenticated() and request_user.is_superuser):
         return HttpResponseRedirect('/')
 
     priority_list = OrderPriority.objects.all()
 
     context = {
         'priorities': priority_list,
-        'is_authenticated': request.user.is_authenticated(),
-        'is_superuser': request.user.is_superuser,
+        'request_user': request_user,
+        'user_profile': user_profile,
     }
 
     return render(request, 'order_priorities.html', context)
@@ -643,7 +698,10 @@ def priorities(request):
 
 def priority_add(request):
 
-    if not (request.user.is_authenticated() and request.user.is_superuser):
+    request_user = request.user
+    user_profile = request_user.userprofile
+
+    if not (request_user.is_authenticated() and request_user.is_superuser):
         return HttpResponseRedirect('/')
 
     if request.method == 'POST':
@@ -662,9 +720,10 @@ def priority_add(request):
     priority_form = OrderPriorityForm()
 
     context = {
+        'action': 'add',
         'priority_form': priority_form,
-        'is_authenticated': request.user.is_authenticated(),
-        'is_superuser': request.user.is_superuser,
+        'request_user': request_user,
+        'user_profile': user_profile,
     }
 
     return render(request, 'order_priority.html', context)
@@ -672,20 +731,31 @@ def priority_add(request):
 
 def priority_del(request, priority_id):
 
-    if not (request.user.is_authenticated() and request.user.is_superuser):
+    request_user = request.user
+
+    if not (request_user.is_authenticated() and request_user.is_superuser):
         return HttpResponseRedirect('/')
 
-    OrderPriority.objects.get(id=priority_id).delete()
+    try:
+        OrderPriority.objects.get(id=priority_id).delete()
+    except OrderPriority.DoesNotExist:
+        return HttpResponseRedirect('http://www.google.com/')
 
     return HttpResponseRedirect('/priorities/view')
 
 
 def priority_edit(request, priority_id):
 
-    if not (request.user.is_authenticated() and request.user.is_superuser):
+    request_user = request.user
+    user_profile = request_user.userprofile
+
+    if not (request_user.is_authenticated() and request_user.is_superuser):
         return HttpResponseRedirect('/')
 
-    order_priority = OrderPriority.objects.get(id=priority_id)
+    try:
+        order_priority = OrderPriority.objects.get(id=priority_id)
+    except OrderPriority.DoesNotExist:
+        return HttpResponseRedirect('http://www.google.com/')
 
     if request.method == 'POST':
 
@@ -703,10 +773,11 @@ def priority_edit(request, priority_id):
     priority_form = OrderPriorityForm(instance=order_priority)
 
     context = {
+        'action': 'edit',
         'priority_id': priority_id,
         'priority_form': priority_form,
-        'is_authenticated': request.user.is_authenticated(),
-        'is_superuser': request.user.is_superuser,
+        'request_user': request_user,
+        'user_profile': user_profile,
     }
 
     return render(request, 'order_priority_edit.html', context)

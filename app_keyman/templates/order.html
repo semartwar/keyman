@@ -12,7 +12,7 @@
 	<tr><td>Причина</td><td>{{ order_form.order_reason }}</td></tr>
 	<tr><td>Здание</td><td>{{ order_form.building }}</td></tr>
 	
-	{% if is_controller %}
+	{% if user_profile.is_controller %}
 		<tr><td>Приоритет</td><td>{{ order_form.priority }}</td></tr>
 		<tr><td>Статус</td><td>{{ order_form.order_status }}</td></tr>
 	{% endif %}

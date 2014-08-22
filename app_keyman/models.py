@@ -92,15 +92,10 @@ class Order(models.Model):
     is_active = models.BooleanField(default=True)
 
 
-class OrganizationUser(models.Model):
+class UserProfile(models.Model):
 
-    user = models.ForeignKey(User)
+    user = models.OneToOneField(User, primary_key=True)
     organization = models.ForeignKey(Organization)
-
-
-class UserInfo(models.Model):
-
-    user = models.ForeignKey(User)
     is_controller = models.BooleanField()
     is_manager = models.BooleanField()
     telephone = models.CharField(max_length=10)
@@ -149,6 +144,8 @@ class UserForm(forms.Form):
     organization = forms.ModelChoiceField(queryset=Organization.objects.all(), label='Организация')
     username = forms.CharField(label='Имя пользователя', max_length=256)
     password = forms.CharField(label='Пароль', max_length=256)
+    first_name = forms.CharField(label='Имя', max_length=30)
+    last_name = forms.CharField(label='Фамилия', max_length=30)
     telephone = forms.CharField(max_length=10, label='Телефон')
     email = forms.EmailField(label='Эл. почта', required=False)
     is_superuser = forms.BooleanField(label='Администратор', required=False)

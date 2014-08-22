@@ -10,7 +10,7 @@
     </div>
     <div class="checkbox">
         <label>
-            <input type="checkbox" id="id_is_default" {% if priority_form.is_default.value %}checked="checked"{% endif %}> По умолчанию
+            <input name="is_default" type="checkbox" id="id_is_default" {% if priority_form.is_default.value %}checked="checked"{% endif %}> По умолчанию
         </label>
     </div>
     <button type="submit" class="btn btn-primary">Сохранить</button>
