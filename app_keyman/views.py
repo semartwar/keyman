@@ -542,6 +542,7 @@ def statuses(request):
         'statuses': status_list,
         'is_authenticated': request.user.is_authenticated(),
         'is_superuser': request.user.is_superuser,
+        'user_info': get_user_info(request.user),
     }
 
     return render(request, 'statuses.html', context)

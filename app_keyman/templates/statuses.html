@@ -4,7 +4,7 @@
 
 	<table class="table table-bordered" align="center">
 	
-	<tr>
+	<tr class="info">
 		<td>Статус</td>
 		<td>Возможна отмена пользователем</td>
 		<td>Может использоваться 
@@ -12,6 +12,8 @@
 		<td>Может использоваться 
 		контролирующим органом</td>
 		<td>По умолчанию</td>
+        <td></td>
+        <td></td>
 	</tr>
 	
 	{% for status in statuses %}
@@ -46,8 +48,8 @@
             {% endif %}
         </td>
 		{% if is_superuser %}
-		<td><a href="{% url 'statuses:edit' status_id=status.id %}">Редактировать</a></td>
-		<td><a href="{% url 'statuses:del' status_id=status.id %}">Удалить</a></td>
+		<td><a class="glyphicon glyphicon-edit" href="{% url 'statuses:edit' status_id=status.id %}"/></td>
+		<td><a class="glyphicon glyphicon-remove" href="{% url 'statuses:del' status_id=status.id %}"/></td>
 		{% endif %}
 	</tr>
 	{% endfor %}
