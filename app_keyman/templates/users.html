@@ -3,12 +3,14 @@
 {% block content %}
 
 {% csrf_token %}
+<div class="panel panel-default">
 <table class="table table-bordered" align="center">
-	<tr>
-	<td>Логин</td>
-	<td>Email</td>
-	<td>Имя</td>
-	<td>Фамилия</td>
+	<tr class="info">
+	<th>Логин</th>
+	<th>Email</th>
+	<th>Имя</th>
+	<th>Фамилия</th>
+    <th>Администратор</th>
 	</tr>
 {% for user in users %}	
 	<tr>
@@ -16,9 +18,12 @@
 	<td>{{ user.email }}</td>
 	<td>{{ user.first_name }}</td>
 	<td>{{ user.last_name }}</td>
-	<td><a href="/users/{{ user.id }}/delete/">Удалить</a></td>
+    <td>{{ user.is_superuser }}</td>
+    <td><a href="#">Редактировать</a></td>
+	<td><a href="{% url 'users:del' user.id %}">Удалить</a></td>
 	</tr>
 {% endfor %}
 </table>
+</div>
 
 {% endblock %}

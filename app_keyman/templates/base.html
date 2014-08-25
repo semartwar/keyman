@@ -10,11 +10,11 @@
 </head>
 <body role="document">
     {% block main %}
-    {% if is_authenticated %}
+    {% if request_user.is_authenticated %}
     <nav class="navbar navbar-default" role="navigation">
         <div class="container-fluid">
             <div class="navbar-header">
-                <a class="navbar-brand" href="/">{{ user_info.organization_name }}</a>
+                <a class="navbar-brand" href="/">{{ user_profile.organization }}</a>
             </div>
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav navbar-right">
@@ -30,7 +30,7 @@
         <div class="col-md-2">
             <div class="list-group">
                 <a href="#" class="list-group-item list-group-item-info">Меню</a>
-                {% if is_superuser %}
+                {% if request_user.is_superuser %}
                 <a class="list-group-item" href="{% url 'statuses:view' %}">Статусы заявок</a>
                 <a class="list-group-item" href="{% url 'priorities:view' %}">Приоритеты заявок</a>
                 <a class="list-group-item" href="{% url 'organizations:view' %}">Организации</a>
@@ -41,7 +41,7 @@
                 <a class="list-group-item" href="{% url 'orders:view' %}">Заявки</a>
                 <a class="list-group-item" href="{% url 'orders:add' %}">Создать заявку</a>
 
-                {% if is_superuser %}
+                {% if request_user.is_superuser %}
                 <a class="list-group-item" href="{% url 'statuses:add' %}">Добавить статус заявки</a>
                 <a class="list-group-item" href="{% url 'organizations:add' %}">Добавить организацию</a>
                 <a class="list-group-item" href="{% url 'streets:add' %}">Добавить улицу</a>

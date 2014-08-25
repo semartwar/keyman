@@ -2,29 +2,31 @@
 {% block title %}Приоритеты заявок{% endblock %}
 {% block content %}
 
+    <div class="panel panel-default">
 	<table class="table table-bordered" align="center">
 	
-	<tr>
-		<td>Приоритет</td>
-		<td>По умолчанию</td>
+	<tr class="info">
+		<th class="text-center text-vcenter">Приоритет</th>
+		<th class="text-center text-vcenter">По умолчанию</th>
 	</tr>
 	
 	{% for priority in priorities %}
 	<tr>
 		<td>{{ priority.name }}</td>
-		<td>
+		<td class="text-center text-vcenter">
             {% if priority.is_default %}
-                <span class="glyphicon glyphicon glyphicon-ok-circle"></span>
+                <span class="glyphicon glyphicon-plus glyph-color-green"></span>
             {% else %}
-                <span class="glyphicon glyphicon-remove-circle"></span>
+                <span class="glyphicon glyphicon-minus glyph-color-red"></span>
             {% endif %}
         </td>
 		{% if is_superuser %}
-		<td><a href="/priorities/{{ priority.id }}/edit/">Редактировать</a></td>
-		<td><a href="/priorities/{{ priority.id }}/delete/">Удалить</a></td>
+		<td><a href="{% url 'priorities:edit' priority.id %}">Редактировать</a></td>
+		<td><a href="{% url 'priorities:del'  priority.id %}">Удалить</a></td>
 		{% endif %}
 	</tr>
 	{% endfor %}
 	</table>
+    </div>
 
 {% endblock %}

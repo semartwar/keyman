@@ -2,57 +2,57 @@
 {% block title %}Статусы заявок{% endblock %}
 {% block content %}
 
-	<table class="table table-bordered" align="center">
+    <div class="panel panel-default">
+	<table class="table table-bordered">
 	
 	<tr class="info">
-		<td>Статус</td>
-		<td>Возможна отмена пользователем</td>
-		<td>Может использоваться 
-		управляющей компанией</td>
-		<td>Может использоваться 
-		контролирующим органом</td>
-		<td>По умолчанию</td>
-        <td></td>
-        <td></td>
+		<th class="text-center text-vcenter">Статус</th>
+		<th class="text-center text-vcenter">Возможна отмена пользователем</th>
+		<th class="text-center text-vcenter">Может использоваться управляющей компанией</th>
+		<th class="text-center text-vcenter">Может использоваться контролирующим органом</th>
+		<th class="text-center text-vcenter">По умолчанию</th>
+        <th></th>
+        <th></th>
 	</tr>
 	
 	{% for status in statuses %}
-	<tr>
-		<td>{{ status.name }}</td>
-		<td>
+	<tr class="text-center">
+		<td class="text-vcenter">{{ status.name }}</td>
+		<td style="vertical-align: middle">
             {% if status.user_can_cancel %}
-                <span class="glyphicon glyphicon glyphicon-ok-circle"></span>
+                <span class="glyphicon glyphicon-plus glyph-color-green"></span>
             {% else %}
-                <span class="glyphicon glyphicon-remove-circle"></span>
+                <span class="glyphicon glyphicon-minus glyph-color-red"></span>
             {% endif %}
         </td>
-		<td>
+		<td style="vertical-align: middle">
             {% if status.manager_can_use %}
-                <span class="glyphicon glyphicon glyphicon-ok-circle"></span>
+                <span class="glyphicon glyphicon-plus glyph-color-green"></span>
             {% else %}
-                <span class="glyphicon glyphicon-remove-circle"></span>
+                <span class="glyphicon glyphicon-minus glyph-color-red"></span>
             {% endif %}
         </td>
-		<td>
+		<td style="vertical-align: middle">
             {% if status.controller_can_use %}
-                <span class="glyphicon glyphicon glyphicon-ok-circle"></span>
+                <span class="glyphicon glyphicon-plus glyph-color-green"></span>
             {% else %}
-                <span class="glyphicon glyphicon-remove-circle"></span>
+                <span class="glyphicon glyphicon-minus glyph-color-red"></span>
             {% endif %}
         </td>
-		<td>
+		<td style="vertical-align: middle">
             {% if status.is_default %}
-                <span class="glyphicon glyphicon glyphicon-ok-circle"></span>
+                <span class="glyphicon glyphicon-plus glyph-color-green"></span>
             {% else %}
-                <span class="glyphicon glyphicon-remove-circle"></span>
+                <span class="glyphicon glyphicon-minus glyph-color-red"></span>
             {% endif %}
         </td>
-		{% if is_superuser %}
-		<td><a class="glyphicon glyphicon-edit" href="{% url 'statuses:edit' status_id=status.id %}"/></td>
-		<td><a class="glyphicon glyphicon-remove" href="{% url 'statuses:del' status_id=status.id %}"/></td>
+		{% if request_user.is_superuser %}
+		<td style="vertical-align: middle"><a class="glyphicon glyphicon-edit" href="{% url 'statuses:edit' status_id=status.id %}"/></td>
+		<td style="vertical-align: middle"><a class="glyphicon glyphicon-remove" href="{% url 'statuses:del' status_id=status.id %}"/></td>
 		{% endif %}
 	</tr>
 	{% endfor %}
 	</table>
+    </div>
 
 {% endblock %}

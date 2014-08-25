@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+
+<form name="status" class="from" method="post" action="{{ action }}">
+	{% csrf_token %}
+
+    <div class="form-group">
+        <label for="id_name">Статус заявки</label>
+        <input name="name" type="text" class="form-control" id="id_name" placeholder="Статус" value="{{ status_form.name.value }}">
+    </div>
+    <div class="checkbox">
+        <label>
+            <input name="user_can_cancel" type="checkbox" id="id_user_can_cancel" {% if status_form.user_can_cancel.value %}checked="checked"{% endif %}> Возможно отменить
+        </label>
+    </div>
+    <div class="checkbox">
+        <label>
+            <input name="manager_can_use" type="checkbox" id="id_manager_can_use" {% if status_form.manager_can_use.value %}checked="checked"{% endif %}> Может использовать управляющая компания
+        </label>
+    </div>
+    <div class="checkbox">
+        <label>
+            <input name="controller_can_use" type="checkbox" id="id_controller_can_use" {% if status_form.controller_can_use.value %}checked="checked"{% endif %} value="controller_can_use"> Может использовать контролирующий орган
+        </label>
+    </div>
+    <div class="checkbox">
+        <label>
+            <input name="is_default" type="checkbox" id="id_is_default" {% if status_form.is_default.value %}checked="checked"{% endif %}> По умолчанию
+        </label>
+    </div>
+    <button type="submit" class="btn btn-primary">Сохранить</button>
+</form>
+
+{% endblock %}
